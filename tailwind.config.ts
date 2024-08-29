@@ -8,10 +8,14 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      screens: {
+        lg: "1100px",
+      },
       gridTemplateColumns: {
         '13': 'repeat(13, minmax(0, 1fr))',
       },
       colors: {
+        customPink: '#fb2a63',
         blue: {
           400: '#2589FE',
           500: '#0070F3',
