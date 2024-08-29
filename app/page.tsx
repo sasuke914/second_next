@@ -137,13 +137,13 @@ export default function Page() {
           </div>
         </div>
       </main>
-      <div className='block md:hidden w-[100%] h-auto'>
+      <div className='block md:hidden w-[100%] h-auto bg-[#151718]'>
         <Image
           src="/player.png"
           alt="Geoway"
           width={1200}
           height={800}
-          className="object-cover"
+          className="object-cover pt-[72px]"
         />
       </div>
     </div>
