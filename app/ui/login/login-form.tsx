@@ -1,15 +1,50 @@
-import { lusitana } from './fonts';
+'use client';
+
+import { lusitana } from '../fonts';
 import {
   AtSymbolIcon,
   KeyIcon,
   ExclamationCircleIcon,
 } from '@heroicons/react/24/outline';
 import { ArrowRightIcon } from '@heroicons/react/20/solid';
-import { Button } from './button';
+import { Button } from '../button';
+import Link from 'next/link';
+import { useState } from 'react';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '../../lib/firebaseConnection';
+import { useRouter } from 'next/navigation';
 
 export default function LoginForm() {
+
+  const [formData, setFormData] = useState({
+    email: '',
+    password: ''
+  })
+  const [error, setError] = useState<string | null>(null);
+
+  const router = useRouter();
+
+  const handleChange = (e: any) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value })
+  }
+
+
+  const handleSignin = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setError(null);
+
+    try {
+      await signInWithEmailAndPassword(auth, formData.email, formData.password);
+      console.log("Signed in successfully!");
+      router.push('/dashboard');
+    } catch (err) {
+      setError((err as Error).message);
+      console.error(err);
+    }
+  }
+
   return (
-    <form className="space-y-3">
+    <form onSubmit={handleSignin} className="space-y-3">
       <div className="flex-1 rounded-lg bg-gray-50 px-6 pb-4 pt-8">
         <h1 className={`${lusitana.className} mb-3 text-2xl`}>
           Please log in to continue.
@@ -29,6 +64,7 @@ export default function LoginForm() {
                 type="email"
                 name="email"
                 placeholder="Enter your email address"
+                onChange={handleChange}
                 required
               />
               <AtSymbolIcon className="pointer-events-none absolute left-3 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-gray-500 peer-focus:text-gray-900" />
@@ -48,6 +84,7 @@ export default function LoginForm() {
                 type="password"
                 name="password"
                 placeholder="Enter password"
+                onChange={handleChange}
                 required
                 minLength={6}
               />
@@ -55,9 +92,14 @@ export default function LoginForm() {
             </div>
           </div>
         </div>
-        <Button className="mt-4 w-full">
+        <Button type='submit' className="mt-4 w-full">
           Log in <ArrowRightIcon className="ml-auto h-5 w-5 text-gray-50" />
         </Button>
+        <div className='flex justify-end mt-[10px] text-gray-500 text-sm'>
+          <Link href={'/register'}>
+            Register
+          </Link>
+        </div>
         <div className="flex h-8 items-end space-x-1">
           {/* Add form errors here */}
         </div>
