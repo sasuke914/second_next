@@ -4,13 +4,13 @@ import { lusitana } from '../../fonts';
 import {
     AtSymbolIcon,
     KeyIcon,
+    CameraIcon
 } from '@heroicons/react/24/outline';
 import { ArrowRightIcon } from '@heroicons/react/20/solid';
-import { useState } from 'react';
-import { signInWithEmailAndPassword } from 'firebase/auth';
-import { auth, db } from '@/app/lib/firebaseConnection';
-import { useRouter } from 'next/navigation';
-import { setDoc, doc, addDoc, collection } from 'firebase/firestore';
+import React, { useState } from 'react';
+import { addDoc, collection } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { db, storage } from '@/app/lib/firebaseConnection';
 
 import { Button } from '../../button';
 
@@ -19,16 +19,22 @@ interface BlogFormProps {
 }
 
 const BlogForm: React.FC<BlogFormProps> = ({ setRoute }) => {
-    const [formData, setFormData] = useState<{ title: string; content: string }>({
+    const [formData, setFormData] = useState<{ title: string; content: string; file: File | null }>({
         title: '',
         content: '',
+        file: null
     });
     const [error, setError] = useState<string | null>(null);
 
-    const router = useRouter();
-
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+        const { name, value } = e.target;
+        setFormData({ ...formData, [name]: value });
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files) {
+            setFormData({ ...formData, file: e.target.files[0] });
+        }
     };
 
     const handleCreate = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -36,13 +42,23 @@ const BlogForm: React.FC<BlogFormProps> = ({ setRoute }) => {
         setError(null);
 
         try {
+            let imageUrl = '';
+            if (formData.file) {
+                // Upload image
+                const fileRef = ref(storage, `images/${Date.now()}_${formData.file.name}`);
+                const snapshot = await uploadBytes(fileRef, formData.file);
+                imageUrl = await getDownloadURL(snapshot.ref);
+            }
+
+            // Add document with image URL
             const docRef = await addDoc(collection(db, 'blogs'), {
                 title: formData.title,
                 content: formData.content,
+                imageUrl,
                 createdAt: new Date().toISOString()
             });
             console.log("Document written with ID: ", docRef.id);
-            setRoute(0)
+            setRoute(0);
         } catch (err) {
             setError((err as Error).message);
             console.error(err);
@@ -96,6 +112,24 @@ const BlogForm: React.FC<BlogFormProps> = ({ setRoute }) => {
                             <KeyIcon className="pointer-events-none absolute left-3 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-gray-500 peer-focus:text-gray-900" />
                         </div>
                     </div>
+                    <div className="mt-4">
+                        <label
+                            className="mb-3 mt-5 block text-xs font-medium text-gray-900"
+                            htmlFor="file"
+                        >
+                            Image
+                        </label>
+                        <div className="relative">
+                            <input
+                                className="peer block w-full rounded-md border border-gray-200 py-[9px] pl-10 text-sm outline-2 placeholder:text-gray-500"
+                                id="file"
+                                type="file"
+                                name="file"
+                                onChange={handleFileChange}
+                            />
+                            <CameraIcon className="pointer-events-none absolute left-3 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-gray-500 peer-focus:text-gray-900" />
+                        </div>
+                    </div>
                 </div>
                 <Button type="submit" className="mt-4 w-full">
                     Create <ArrowRightIcon className="ml-auto h-5 w-5 text-gray-50" />
@@ -105,9 +139,11 @@ const BlogForm: React.FC<BlogFormProps> = ({ setRoute }) => {
                         Back
                     </Button>
                 </div>
-                <div className="flex h-8 items-end space-x-1">
-                    {/* Add form errors here */}
-                </div>
+                {error && (
+                    <div className="mt-2 text-red-600">
+                        {error}
+                    </div>
+                )}
             </div>
         </form>
     );
