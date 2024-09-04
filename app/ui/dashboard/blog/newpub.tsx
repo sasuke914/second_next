@@ -10,7 +10,7 @@ import { ArrowRightIcon } from '@heroicons/react/20/solid';
 import React, { useState } from 'react';
 import { addDoc, collection } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { db, storage } from '@/app/lib/firebaseConnection';
+import { auth, db, storage } from '@/app/lib/firebaseConnection';
 
 import { Button } from '../../button';
 
@@ -50,11 +50,19 @@ const BlogForm: React.FC<BlogFormProps> = ({ setRoute }) => {
                 imageUrl = await getDownloadURL(snapshot.ref);
             }
 
+            const user = auth.currentUser;
+
+            if (!user) {
+                setError('User is not logged in.');
+                return;
+            }
+
             // Add document with image URL
             const docRef = await addDoc(collection(db, 'blogs'), {
                 title: formData.title,
                 content: formData.content,
                 imageUrl,
+                postedBy: user.uid,
                 createdAt: new Date().toISOString()
             });
             console.log("Document written with ID: ", docRef.id);

@@ -16,7 +16,7 @@ interface Blog {
     content: string;
     createdAt: string;
     updatedAt: string;
-    imageUrl?: string; // Optional image URL
+    imageUrl?: string;
 }
 
 const Publist: React.FC<PublistProps> = ({ setRoute }) => {

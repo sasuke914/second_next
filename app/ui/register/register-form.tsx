@@ -3,12 +3,12 @@
 import Link from 'next/link';
 import { AtSymbolIcon, KeyIcon, ExclamationCircleIcon, UserCircleIcon } from '@heroicons/react/24/outline';
 import { ArrowRightIcon } from '@heroicons/react/20/solid';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 
 import { lusitana } from '../fonts';
 import { Button } from '../button';
-import { auth, db } from '../../lib/firebaseConnection';
+import { auth, db, provider } from '../../lib/firebaseConnection';
 import { ChangeEvent, FormEvent, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
@@ -44,6 +44,25 @@ export default function RegisterForm() {
         } catch (err) {
             setError((err as Error).message);
             console.error(err);
+        }
+    };
+
+    const handleSignUpWithGoogle = async () => {
+        try {
+            const result = await signInWithPopup(auth, provider);
+            // The signed-in user info.
+            const user = result.user;
+            await setDoc(doc(db, 'users', user.uid), {
+                uid: user.uid,
+                email: user.email,
+                firstName: user.displayName,
+                lastName: user.displayName,
+                createdAt: new Date().toISOString(),
+            });
+            router.push('/dashboard');
+            console.log('User info:', user);
+        } catch (error) {
+            console.error('Error signing in with Google:', error);
         }
     };
 
@@ -129,10 +148,13 @@ export default function RegisterForm() {
                 <Button type="submit" className="mt-4 w-full">
                     Register <ArrowRightIcon className="ml-auto h-5 w-5 text-gray-50" />
                 </Button>
+                <Button onClick={handleSignUpWithGoogle} className="mt-4 w-full">
+                    SignUp with Google
+                </Button>
                 <div className="flex justify-end mt-[10px] text-gray-500 text-sm">
                     <Link href={'/login'}>Already registered</Link>
                 </div>
-                <div className="flex h-8 items-end space-x-1">{error && <p>{error}</p>}</div>
+                <div className=" h-8 items-end space-x-1">{error && <p>{error}</p>}</div>
             </div>
         </form>
     );

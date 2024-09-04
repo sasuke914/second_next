@@ -10,8 +10,8 @@ import { ArrowRightIcon } from '@heroicons/react/20/solid';
 import { Button } from '../button';
 import Link from 'next/link';
 import { useState } from 'react';
-import { signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../../lib/firebaseConnection';
+import { signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
+import { auth, provider } from '../../lib/firebaseConnection';
 import { useRouter } from 'next/navigation';
 
 export default function LoginForm() {
@@ -42,6 +42,18 @@ export default function LoginForm() {
       console.error(err);
     }
   }
+
+  const handleLogin = async () => {
+    try {
+      const result = await signInWithPopup(auth, provider);
+      // The signed-in user info.
+      const user = result.user;
+      router.push('/dashboard');
+      console.log('User info:', user);
+    } catch (error) {
+      console.error('Error signing in with Google:', error);
+    }
+  };
 
   return (
     <form onSubmit={handleSignin} className="space-y-3">
@@ -95,13 +107,16 @@ export default function LoginForm() {
         <Button type='submit' className="mt-4 w-full">
           Log in <ArrowRightIcon className="ml-auto h-5 w-5 text-gray-50" />
         </Button>
+        <Button onClick={handleLogin} className="mt-4 w-full">
+          Login with Google
+        </Button>
         <div className='flex justify-end mt-[10px] text-gray-500 text-sm'>
           <Link href={'/register'}>
             Register
           </Link>
         </div>
-        <div className="flex h-8 items-end space-x-1">
-          {/* Add form errors here */}
+        <div className="h-8 items-end space-x-1">
+          <div className=" h-8 items-end space-x-1">{error && <p>{error}</p>}</div>
         </div>
       </div>
     </form>
