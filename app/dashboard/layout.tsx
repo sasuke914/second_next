@@ -1,5 +1,4 @@
 import Footer from "../ui/dashboard/Footer/footer";
-import SideNav from "../ui/dashboard/sidenav";
 import { raleway } from "../ui/fonts";
 import { Private } from "../lib/routes/Private";
 
