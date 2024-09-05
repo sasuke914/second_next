@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { AtSymbolIcon, KeyIcon, ExclamationCircleIcon, UserCircleIcon } from '@heroicons/react/24/outline';
 import { ArrowRightIcon } from '@heroicons/react/20/solid';
-import { createUserWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
+import { createUserWithEmailAndPassword, sendEmailVerification, signInWithPopup } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 
 import { lusitana } from '../fonts';
@@ -28,10 +28,14 @@ export default function RegisterForm() {
 
         try {
             const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
+            await auth.signOut().then((data) => {
+                console.log("User logged out");
+            });
             const user = userCredential.user;
-            console.log('User:', user);
+            await sendEmailVerification(user);
+            console.log('User:', user.emailVerified);
 
-            await setDoc(doc(db, 'users', user.uid), {
+            await setDoc(doc(db, 'unverified_users', user.uid), {
                 uid: user.uid,
                 email: user.email,
                 firstName: formData.firstName,
@@ -57,7 +61,6 @@ export default function RegisterForm() {
                 email: user.email,
                 firstName: user.displayName,
                 lastName: user.displayName,
-                createdAt: new Date().toISOString(),
             });
             router.push('/dashboard');
             console.log('User info:', user);

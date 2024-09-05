@@ -19,7 +19,7 @@ const DataTable: React.FC<DataTableProps> = ({ columns, data }) => {
                 }}
                 pageSizeOptions={[5, 10]}
                 checkboxSelection
-                sx={{ overflow: 'clip' }}
+                sx={{ overflow: 'clip', backgroundColor: 'white' }}
             />
         </div>
     );

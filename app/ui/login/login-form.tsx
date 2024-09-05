@@ -10,9 +10,10 @@ import { ArrowRightIcon } from '@heroicons/react/20/solid';
 import { Button } from '../button';
 import Link from 'next/link';
 import { useState } from 'react';
-import { signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
-import { auth, provider } from '../../lib/firebaseConnection';
+import { signInWithEmailAndPassword, signInWithPopup, UserCredential } from 'firebase/auth';
+import { auth, db, provider } from '../../lib/firebaseConnection';
 import { useRouter } from 'next/navigation';
+import { deleteDoc, doc, getDoc, setDoc } from 'firebase/firestore';
 
 export default function LoginForm() {
 
@@ -21,6 +22,7 @@ export default function LoginForm() {
     password: ''
   })
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string>('');
 
   const router = useRouter();
 
@@ -31,12 +33,31 @@ export default function LoginForm() {
 
   const handleSignin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setError(null);
+    setError('');
+    setSuccess('');
 
     try {
-      await signInWithEmailAndPassword(auth, formData.email, formData.password);
-      console.log("Signed in successfully!");
-      router.push('/dashboard');
+      const userCredential: UserCredential = await signInWithEmailAndPassword(auth, formData.email, formData.password);
+      const user = userCredential.user;
+      if (user.emailVerified) {
+        const userDoc = doc(db, 'unverified_users', user.uid);
+        const userSnapshot = await getDoc(userDoc);
+        if (userSnapshot.exists()) {
+          const userData = userSnapshot.data();
+          await setDoc(doc(db, 'users', user.uid), {
+            uid: user.uid,
+            email: userData.email,
+            firstName: userData.firstName,
+            lastName: userData.lastName,
+            createdAt: new Date().toISOString(),
+          });
+          await deleteDoc(userDoc);
+          setSuccess('Sign-in successful!');
+        }
+        router.push('/dashboard');
+      } else {
+        setError('Please verify your email before signing in.');
+      }
     } catch (err) {
       setError((err as Error).message);
       console.error(err);
@@ -115,9 +136,8 @@ export default function LoginForm() {
             Register
           </Link>
         </div>
-        <div className="h-8 items-end space-x-1">
-          <div className=" h-8 items-end space-x-1">{error && <p>{error}</p>}</div>
-        </div>
+        {error && <p style={{ color: 'red' }}>{error}</p>}
+        {success && <p style={{ color: 'green' }}>{success}</p>}
       </div>
     </form>
   );

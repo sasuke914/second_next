@@ -169,7 +169,7 @@ const Publist: React.FC<PublistProps> = ({ setRoute }) => {
     return (
         <div>
             <Box sx={{ pt: 3, pb: 5 }}>
-                <Typography variant='h4' align='center'>Blog Data</Typography>
+                <Typography variant='h4' color='white' align='center'>Blog Data</Typography>
                 <Button color='primary' sx={{ my: 1 }} variant='contained' onClick={() => { setRoute(1) }}>New Blog</Button>
                 <DataTable columns={bloglistColumns} data={bloglist} />
             </Box>
